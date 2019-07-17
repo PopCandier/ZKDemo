@@ -1,5 +1,6 @@
 package com.pop.zookeeper;
 
+import org.apache.curator.framework.AuthInfo;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.ExponentialBackoffRetry;
@@ -23,10 +24,17 @@ public class AclDemo {
     //,192.168.255.102:2182,192.168.255.102:2183
     public static void main(String[] args) throws Exception {
 
+        //如果你要访问某个有权限设置的节点
+        AuthInfo authInfo = new AuthInfo("digest","admin:admin".getBytes());
+        List<AuthInfo> authInfos = new ArrayList<>();
+        authInfos.add(authInfo);
 //        CuratorFramework curatorFramework = CuratorFrameworkFactory.newClient()
         CuratorFramework curatorFramework = CuratorFrameworkFactory.builder()
                 .connectString(CONNECT_STR).sessionTimeoutMs(5000)//会话超时时间
-                .retryPolicy(new ExponentialBackoffRetry(100, 3)).//重试策略
+                .retryPolicy(new ExponentialBackoffRetry(100, 3))//重试策略
+        .namespace("/cc")//所有操作在这个节点，也就是命名空间下操作
+                .authorization(authInfos)//当然这个方法还有个重载方法，可以设置一条
+                .authorization("digest","admin:admin".getBytes()).//单独设置也可以
                 build();
 
         curatorFramework.start();
