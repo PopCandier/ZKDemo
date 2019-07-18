@@ -2,6 +2,7 @@ package com.pop.zookeeper;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.apache.curator.framework.recipes.locks.InterProcessMutex;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 
 /**
@@ -52,6 +53,32 @@ public class LockDemo {
         curatorFramework.start();
 
         //创建锁
+        final InterProcessMutex lock=
+        new InterProcessMutex(curatorFramework,"/locks");
+
+        //然后模仿多个客户端的连接。
+        for(int i =0;i<10;i++){
+
+            new Thread(()->{
+
+                System.out.println(Thread.currentThread().getName()+"->尝试获得锁");
+                try {
+                    lock.acquire();
+                    System.out.println(Thread.currentThread().getName()+"->获得锁成功");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                try {
+                    Thread.sleep(4000);//模仿业务处理
+                    lock.release();//释放锁
+                    System.out.println(Thread.currentThread().getName()+"->释放锁成功");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }).start();
+
+        }
+
 
     }
 
